@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { LIMIT } from "./constant";
+import { ErrorsMiddleware } from "./middleware/errors.middleware";
 
 const app = express();
 
@@ -35,5 +36,8 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
     err.statusCode = 404;
     next(err);
 });
+
+
+app.use(ErrorsMiddleware);
 
 export { app };
