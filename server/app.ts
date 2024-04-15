@@ -18,6 +18,14 @@ app.use(cookieParser());
 
 
 // routes
+import userRouter from "./routes/user.route";
+
+
+
+// routes declaration
+app.use("/api/v1/users", userRouter);
+
+
 
 // test route
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
@@ -32,10 +40,24 @@ app.get("/test", (req: Request, res: Response, next: NextFunction) => {
 
 //  Unknown endpoint request
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
+    // Add other known routes as needed
+    const usersGeneric = `/api/v1/users`;
+    const knownRoutes = [
+        `${usersGeneric}/register`,
+        "/test",
+    ];
+
+    if (knownRoutes.includes(req.originalUrl)) {
+        // Requested route is known, send a specific error response
+        return res.status(404).json({ error: `Route ${req.originalUrl} not found` });
+    }
+    
+    // Requested route is unknown, send a generic error response
     const err = new Error(`Requested route ${req.originalUrl} not found`) as any;
     err.statusCode = 404;
     next(err);
 });
+
 
 
 app.use(ErrorsMiddleware);
