@@ -197,4 +197,87 @@ const activateUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { registerUser, activateUser };
+
+interface ILoginUser {
+    email: string;
+    password: string;
+}
+
+
+/**
+ * Controller function to handle user login.
+ */
+const loginUser = asyncHandler(async (req: Request, res: Response) => {
+    /* Algorithm:
+        1. get data from req.body
+        2. login using email
+        3. find the user
+        4. if user exists, password check
+        5. if password correct then generate both access and refresh token
+        6. send them in secure cookies
+        7. success response 
+  */
+
+    const { email, password } = req.body as ILoginUser;
+    // console.log(email);
+
+    if (!email) {
+        throw new ApiError(400, "Email is mandatory to proceed");
+    }
+
+    const existedUser = await User.findOne({ email });
+    if (!existedUser) {
+        throw new ApiError(400, "User doesn't exist");
+    }
+
+    const isPasswordCorrect = await existedUser.comparePassword(password);
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Entered password isn't a valid credential");
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(existedUser?.id)
+
+    const loggedInUser = await User.findById(existedUser.id).select("-password -refreshToken");
+
+    const httpsOptions = {
+        httpOnly: true,
+        secure: true
+    }; // these options so that cookies could be modified only from the server, because they are by default modifiable by client
+
+
+    return res.status(200)
+        .cookie("accessToken", accessToken, httpsOptions)
+        .cookie("refreshToken", refreshToken, httpsOptions)
+        .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully!"));
+
+});
+
+
+/**
+ * Function to generate access and refresh tokens for a user.
+ * @param userId The ID of the user.
+ * @returns Object containing the access token and refresh token.
+ */
+const generateAccessAndRefreshToken = async (userId: any) => {
+    try {
+        const user = await User.findById(userId);
+
+        // Step 1: Check if user exists
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        // Step 2: Generate tokens
+        const accessToken = user.generateAccessToken() as string;
+        const refreshToken = user.generateRefreshToken() as string;
+
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error: any) {
+        throw new ApiError(500, "Something went wrong while generating access and refresh tokens.. ")
+    }
+}
+
+export { registerUser, activateUser, loginUser };

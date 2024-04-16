@@ -1,5 +1,6 @@
 import mongoose, { Document } from "mongoose";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 /**
  * Regular expression pattern for validating email addresses.
@@ -20,7 +21,10 @@ export interface IUser extends Document {
     role: string;
     isVerified: boolean;
     courses: Array<{ courseId: string }>;
+    refreshToken: string;
     comparePassword: (password: string) => Promise<boolean>;
+    generateAccessToken: () => string;
+    generateRefreshToken: () => string;
 }
 
 
@@ -74,6 +78,9 @@ const userSchema = new mongoose.Schema<IUser>({
             courseId: String
         },
     ],
+    refreshToken: {
+        type: String,
+    }
 }, { timestamps: true });
 
 
@@ -98,5 +105,45 @@ userSchema.pre<IUser>("save", async function (next) {
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
     return await bcrypt.compare(password, this.password);
 };
+
+
+
+// Method to generate an access token for the user
+userSchema.methods.generateAccessToken = function () {
+    if (!process.env.ACCESS_TOKEN_SECRET) {
+        throw new Error("ACCESS_TOKEN_SECRET environment variable is not defined");
+    }
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            name: this.name,
+        },
+        process.env.ACCESS_TOKEN_SECRET! as string,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "5min"
+        }
+    )
+};
+
+
+
+// Method to generate a refresh token for the user
+userSchema.methods.generateRefreshToken = function () {
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+        throw new Error("REFRESH_TOKEN_SECRET environment variable is not defined");
+    }
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        process.env.REFRESH_TOKEN_SECRET! as string,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "2d"
+        }
+    )
+};
+
+
 
 export const User = mongoose.model<IUser>("User", userSchema);
