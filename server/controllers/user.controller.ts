@@ -115,4 +115,86 @@ const createActivationToken = (user: any): IActivationToken => {
 }
 
 
-export { registerUser };
+/**
+ * Interface representing the request body for user activation.
+ */
+interface IActivationRequest {
+    activation_token: string;
+    activation_code: string;
+}
+
+/**
+ * Controller function to activate a user account.
+ */
+const activateUser = asyncHandler(async (req: Request, res: Response) => {
+    try {
+
+        // Step 1: Extract activation token and activation code from request body
+        const {
+            activation_code,
+            activation_token
+        } = req.body as IActivationRequest;
+
+        // Step 2: Verify the activation token
+        const newUser: {
+            user: IUser; activationCode: string
+        } = jwt
+            .verify(
+                activation_token,
+                process.env.ACTIVATION_TOKEN_SECRET! as string
+            ) as {
+                user: IUser; activationCode: string
+            };
+
+        // Step 3: Check if activation code matches
+        if (newUser.activationCode !== activation_code) {
+            throw new ApiError(400, "Invalid activation code");
+        }
+
+        // Step 4: Check if user with the same email already exists
+        const {
+            name,
+            email,
+            password
+        } = newUser.user;
+        const existedUser = await User.findOne({
+            email
+        });
+        if (existedUser) {
+            throw new ApiError(409, "User with username or email already exists..")
+        }
+
+        // Step 5: Create user with verified details
+        const user = await User.create({
+            name,
+            email,
+            password
+        });
+
+        // Step 6: Check if user is successfully created
+        const userCreated = await User.findById(user._id).select("-password");
+        if (!userCreated) {
+            throw new ApiError(500, "Something went wrong while registering the user..")
+        }
+
+        // Step 7: Respond with success message and user details
+        return res
+            .status(201)
+            .json(
+                new ApiResponse(200, userCreated, "User registered successfully..")
+            );
+
+    } catch (error: any) {
+        // Step 8: Handle errors
+        if (error instanceof jwt.TokenExpiredError) {
+            throw new ApiError(400, "Activation token has expired");
+        }
+        if (error instanceof jwt.JsonWebTokenError) {
+            throw new ApiError(400, "Invalid activation token");
+        }
+        throw new ApiError(400, `Something went wrong while registering the user. ${error?.message}`);
+    }
+});
+
+
+export { registerUser, activateUser };
