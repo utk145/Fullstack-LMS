@@ -7,6 +7,8 @@ import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
 import { ApiResponse } from "../utils/ApiResponse";
+import { sendTokens } from "../utils/jwt";
+import { redis } from "../db/redis";
 
 interface IRegistrationUser {
     name: string;
@@ -221,8 +223,8 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body as ILoginUser;
     // console.log(email);
 
-    if (!email) {
-        throw new ApiError(400, "Email is mandatory to proceed");
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password are mandatory");
     }
 
     const existedUser = await User.findOne({ email });
@@ -235,49 +237,35 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(401, "Entered password isn't a valid credential");
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(existedUser?.id)
-
-    const loggedInUser = await User.findById(existedUser.id).select("-password -refreshToken");
-
-    const httpsOptions = {
-        httpOnly: true,
-        secure: true
-    }; // these options so that cookies could be modified only from the server, because they are by default modifiable by client
-
-
-    return res.status(200)
-        .cookie("accessToken", accessToken, httpsOptions)
-        .cookie("refreshToken", refreshToken, httpsOptions)
-        .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully!"));
-
+    await sendTokens(existedUser, 200, res);
 });
 
 
 /**
- * Function to generate access and refresh tokens for a user.
- * @param userId The ID of the user.
- * @returns Object containing the access token and refresh token.
+ * Controller function to handle user logout.
+ * 
+ * Algorithm:
+ * 1. Clear the access and refresh tokens in cookies.
+ * 2. Delete the user's session from Redis.
+ * 3. Respond with success message.
+ * 
+ * @param req Express Request object.
+ * @param res Express Response object.
+ * @returns Success response or error.
  */
-const generateAccessAndRefreshToken = async (userId: any) => {
+const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     try {
-        const user = await User.findById(userId);
+        res.cookie("accessToken", "", { maxAge: 1 });
+        res.cookie("refreshToken", "", { maxAge: 1 });
 
-        // Step 1: Check if user exists
-        if (!user) {
-            throw new ApiError(404, "User not found");
-        }
+        await redis.del(req.user?._id || "")
 
-        // Step 2: Generate tokens
-        const accessToken = user.generateAccessToken() as string;
-        const refreshToken = user.generateRefreshToken() as string;
+        return res.status(200).json({ success: true, message: "User logged out successfully" });
 
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
-
-        return { accessToken, refreshToken };
     } catch (error: any) {
-        throw new ApiError(500, "Something went wrong while generating access and refresh tokens.. ")
+        throw new ApiError(400, error?.message);
     }
-}
 
-export { registerUser, activateUser, loginUser };
+})
+
+export { registerUser, activateUser, loginUser, logoutUser };

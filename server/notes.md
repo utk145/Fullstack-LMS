@@ -11,7 +11,7 @@ BASIC SETUP:
 2. User model design ✅
 3. User registration ✅
 4. User activation ✅
-5. User login ✅, logout
-6. User authorization
+5. User login ✅, logout ✅
+6. User authorization (middleware _verifyJWT_)✅
 7. Generate token, user socials auth, get user info
 8. Update user info, password and avatar 
