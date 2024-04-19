@@ -2,12 +2,12 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
 import { IUser, User } from "../models/user.models";
 import { ApiError } from "../utils/ApiError";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
 import { ApiResponse } from "../utils/ApiResponse";
-import { sendTokens } from "../utils/jwt";
+import { accessTokenExpiry, accessTokenOptions, refreshTokenExpiry, refreshTokenOptions, sendTokens } from "../utils/jwt";
 import { redis } from "../db/redis";
 
 interface IRegistrationUser {
@@ -266,6 +266,62 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, error?.message);
     }
 
-})
+});
 
-export { registerUser, activateUser, loginUser, logoutUser };
+
+
+/**
+ * Controller function to update the access token using a refresh token.
+ * 
+ * Algorithm:
+ * 1. Extract the refresh token from cookies.
+ * 2. Verify the refresh token and decode the payload.
+ * 3. If the decoded payload or user ID is missing, throw an error.
+ * 4. Retrieve the user session from Redis based on the user ID.
+ * 5. If the session is not found, throw an error.
+ * 6. Generate a new access token and refresh token.
+ * 7. Set the new tokens in response cookies.
+ * 8. Send a success response with the new access token.
+ * 
+ * @param req Express Request object.
+ * @param res Express Response object.
+ * @returns Success response with the new access token or error response.
+ */
+const updateAccessToken = asyncHandler(async (req: Request, res: Response) => {
+    try {
+
+
+        const refreshToken = req.cookies?.refreshToken as string;
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET! as string) as JwtPayload;
+
+        if (!decoded || !decoded?._id) {
+            throw new ApiError(400, "Couldn't refresh the token");
+        }
+
+        const session = await redis.get(decoded._id as string);
+        if (!session) {
+            throw new ApiError(400, "User session not found");
+        }
+
+        const user = JSON.parse(session);
+        const newAccessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET! as string, {
+            expiresIn: `${accessTokenExpiry}s`
+        });
+
+        const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET! as string, {
+            expiresIn: `${refreshTokenExpiry}s`
+        });
+
+        res.cookie("accessToken", newAccessToken, accessTokenOptions);
+        res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { newAccessToken }))
+
+    } catch (error: any) {
+        throw new ApiError(400, error?.message);
+    }
+});
+
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken };

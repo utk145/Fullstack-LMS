@@ -1,6 +1,7 @@
 import mongoose, { Document } from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { accessTokenExpiry, refreshTokenExpiry } from "../utils/jwt";
 
 /**
  * Regular expression pattern for validating email addresses.
@@ -121,7 +122,7 @@ userSchema.methods.generateAccessToken = function () {
         },
         process.env.ACCESS_TOKEN_SECRET! as string,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "5min"
+            expiresIn: `${accessTokenExpiry}s`
         }
     )
 };
@@ -139,7 +140,7 @@ userSchema.methods.generateRefreshToken = function () {
         },
         process.env.REFRESH_TOKEN_SECRET! as string,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "2d"
+            expiresIn: `${refreshTokenExpiry}s`
         }
     )
 };

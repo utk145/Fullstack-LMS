@@ -13,6 +13,33 @@ interface ITokenOptions {
 }
 
 
+// Step 3: Define token expiry options
+export const accessTokenExpiry = parseInt(process.env.ACCESS_TOKEN_EXPIRY || '5', 10) * 60; // Convert minutes to seconds
+export const refreshTokenExpiry = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '2', 10) * 24 * 60 * 60; // Convert days to seconds
+
+const accessExpires = new Date(Date.now() + accessTokenExpiry * 1000);
+const refreshExpires = new Date(Date.now() + refreshTokenExpiry * 1000);
+
+// Step 4: Define options for cookies
+export const accessTokenOptions: ITokenOptions = {
+    expires: accessExpires,
+    maxAge: accessTokenExpiry * 1000, // Convert seconds to milliseconds
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env?.NODE_ENV === 'production' ? true : false // Enable secure flag in production
+}; // these options so that cookies could be modified only from the server, because they are by default modifiable by client
+
+export const refreshTokenOptions: ITokenOptions = {
+    expires: refreshExpires,
+    maxAge: refreshTokenExpiry * 1000, // Convert seconds to milliseconds
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env?.NODE_ENV === 'production' ? true : false // Enable secure flag in production
+}; // these options so that cookies could be modified only from the server, because they are by default modifiable by client
+
+
+
+
 /**
  * Sends access and refresh tokens in HTTP cookies upon successful user login.
  * @param user The authenticated user object.
@@ -37,32 +64,7 @@ const sendTokens = async (user: IUser, statusCode: number, res: Response) => {
 
         redis.set(user?._id, JSON.stringify(user) as any);
 
-        // Step 3: Define token expiry options
-        const accessTokenExpiry = parseInt(process.env.ACCESS_TOKEN_EXPIRY! as string || '300', 10);
-        const refreshTokenExpiry = parseInt(process.env.REFRESH_TOKEN_EXPIRY! as string || '1200', 10);
-
-        const accessExpires = new Date();
-        accessExpires.setSeconds(accessExpires.getSeconds() + accessTokenExpiry);
-        const refreshExpires = new Date();
-        refreshExpires.setSeconds(refreshExpires.getSeconds() + refreshTokenExpiry);
-
-        // Step 4: Define options for cookies
-        const accessTokenOptions: ITokenOptions = {
-            expires: accessExpires,
-            maxAge: accessTokenExpiry * 1000, // Convert seconds to milliseconds
-            httpOnly: true,
-            sameSite: "lax",
-            secure: process.env?.NODE_ENV === 'production' ? true : false // Enable secure flag in production
-        }; // these options so that cookies could be modified only from the server, because they are by default modifiable by client
-
-        const refreshTokenOptions: ITokenOptions = {
-            expires: refreshExpires,
-            maxAge: refreshTokenExpiry * 1000, // Convert seconds to milliseconds
-            httpOnly: true,
-            sameSite: "lax",
-            secure: process.env?.NODE_ENV === 'production' ? true : false // Enable secure flag in production
-        }; // these options so that cookies could be modified only from the server, because they are by default modifiable by client
-
+        // Refactored steps to export for multiple use
 
 
         // Step 5: Send tokens in response cookies
