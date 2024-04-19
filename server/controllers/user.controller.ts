@@ -281,7 +281,8 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
  * 5. If the session is not found, throw an error.
  * 6. Generate a new access token and refresh token.
  * 7. Set the new tokens in response cookies.
- * 8. Send a success response with the new access token.
+ * 8. Update the access token in the Redis session.
+ * 9. Send a success response with the new access token.
  * 
  * @param req Express Request object.
  * @param res Express Response object.
@@ -289,16 +290,18 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
  */
 const updateAccessToken = asyncHandler(async (req: Request, res: Response) => {
     try {
-
-
         const refreshToken = req.cookies?.refreshToken as string;
+        console.log("refreshToken", refreshToken);
+
         const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET! as string) as JwtPayload;
+        console.log("decoded from updateAccessToken", decoded);
 
         if (!decoded || !decoded?._id) {
             throw new ApiError(400, "Couldn't refresh the token");
         }
 
-        const session = await redis.get(decoded._id as string);
+        const sessionKey = decoded._id as string;
+        const session = await redis.get(sessionKey);
         if (!session) {
             throw new ApiError(400, "User session not found");
         }
@@ -312,16 +315,19 @@ const updateAccessToken = asyncHandler(async (req: Request, res: Response) => {
             expiresIn: `${refreshTokenExpiry}s`
         });
 
+        // Set the new access token and refresh token in the response cookies
         res.cookie("accessToken", newAccessToken, accessTokenOptions);
         res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
 
-        return res
-            .status(200)
-            .json(new ApiResponse(200, { newAccessToken }))
+        // Update the access token in the Redis session
+        await redis.set(sessionKey, JSON.stringify({ ...user, accessToken: newAccessToken }));
+
+        return res.status(200).json(new ApiResponse(200, { newAccessToken }));
 
     } catch (error: any) {
         throw new ApiError(400, error?.message);
     }
 });
+
 
 export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken };
