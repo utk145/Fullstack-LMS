@@ -55,4 +55,28 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
     } catch (error: any) {
         throw new ApiError(401, error?.message || "Invalid access token")
     }
-})
+});
+
+
+/**
+ * Middleware function to authorize user roles for accessing resources.
+ * 
+ * Algorithm:
+ * 1. Check if the user's role is included in the authorized roles.
+ * 2. If the user's role is not included, log the unauthorized access attempt and throw an error.
+ * 3. If the user's role is included, proceed to the next middleware.
+ * 
+ * @param roles List of roles that are authorized to access the resource.
+ * @returns Express middleware function.
+ */
+export const authorizeRoles = (...roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (!roles.includes(req.user?.role || "")) {
+            return next(new ApiError(403, `Role : ${req.user?.role} is not authorized to perform this action or access resource.`));
+        }
+        next();
+    }
+};
+
+
+
