@@ -40,7 +40,7 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
 
 
         // Retrieve the user from Redis based on the decoded token info
-        const user = await redis.get(decodedTokenInfo?.id);
+        const user = await redis.get(decodedTokenInfo?._id || decodedTokenInfo?.id);
         console.log("user from veirfyJWT-- ", user);
 
         if (!user) {

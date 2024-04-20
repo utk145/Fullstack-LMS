@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema<IUser>({
     },
     password: {
         type: String,
-        required: [true, "Password is mandatory field"],
+        // required: [true, "Password is mandatory field"], // this shouldn't be true as  when we use socials-auth then it is managed by the service provider 
         minlength: [6, "Length of the password must be atleast 6 characters"]
     },
     avatar: {

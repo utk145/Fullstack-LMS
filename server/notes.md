@@ -13,5 +13,5 @@ BASIC SETUP:
 4. User activation ✅
 5. User login ✅, logout ✅
 6. User authorization (middleware _verifyJWT_)✅
-7. Generate token, user socials auth, get user info
+7. Generate token, user socials auth ✅, get user info ✅
 8. Update user info, password and avatar 

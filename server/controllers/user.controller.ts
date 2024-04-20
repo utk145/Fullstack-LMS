@@ -9,6 +9,8 @@ import sendMail from "../utils/sendMail";
 import { ApiResponse } from "../utils/ApiResponse";
 import { accessTokenExpiry, accessTokenOptions, refreshTokenExpiry, refreshTokenOptions, sendTokens } from "../utils/jwt";
 import { redis } from "../db/redis";
+import { getUserDetailsById } from "../services/user.service";
+import { sanitizeInput } from "../utils/sanitizeAuthInput";
 
 interface IRegistrationUser {
     name: string;
@@ -330,4 +332,83 @@ const updateAccessToken = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken };
+
+/**
+ * Controller function to fetch user details by user ID.
+ * 
+ * Algorithm:
+ * 1. Extract the user ID from the request object.
+ * 2. Call the getUserDetailsById function to retrieve user details.
+ * 3. Send a success response with the user details.
+ * 
+ * @param req Express Request object.
+ * @param res Express Response object.
+ * @returns Success response with the user details or error response.
+ */
+const getUserInfo = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        const userDetails = await getUserDetailsById(userId);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, userDetails, "Details of the user fetched successfully"));
+
+    } catch (error: any) {
+        throw new ApiError(400, error?.message);
+    }
+});
+
+
+interface ISocialAuthBody {
+    email: string;
+    name: string;
+    avatar: string;
+}
+
+// Social auth. We'll take everything with frontend but in the backend we'll only take email, name, avatar. This route will only get hit after validation of NextAuth from frontend.
+/**
+ * Controller function to handle social authentication.
+ * 
+ * Algorithm:
+ * 1. Extract email, name, and avatar from the request body.
+ * 2. Sanitize the input data to prevent any potential security vulnerabilities.
+ * 3. Check if a user with the provided email already exists in the database.
+ * 4. If the user does not exist, create a new user with the provided email, name, and avatar.
+ * 5. Generate and send tokens in the response to authenticate the user.
+ * 6. If the user already exists, send tokens to authenticate the existing user.
+ * 
+ * @param req Express Request object containing email, name, and avatar in the request body.
+ * @param res Express Response object.
+ * @returns Tokens for user authentication or error response.
+ */
+const socialAuth = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { email, name, avatar } = req.body as ISocialAuthBody;
+
+        if (!email || !name) {
+            throw new ApiError(400, 'All fields are compulsory');
+        }
+
+        const sanitizedEmail = sanitizeInput(email);
+        const sanitizedName = sanitizeInput(name);
+        const sanitizedAvatar = sanitizeInput(avatar);
+
+
+        const existedUser = await User.findOne({ email: sanitizedEmail });
+        if (!existedUser) {
+            const newUser = await User.create({ email: sanitizedEmail, name: sanitizedName, avatar: sanitizedAvatar });
+            await sendTokens(newUser, 200, res);
+        } else {
+            await sendTokens(existedUser, 200, res);
+        }
+
+    } catch (error: any) {
+        throw new ApiError(400, error?.message);
+    }
+
+
+});
+
+
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth };
