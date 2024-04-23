@@ -317,6 +317,8 @@ const updateAccessToken = asyncHandler(async (req: Request, res: Response) => {
             expiresIn: `${refreshTokenExpiry}s`
         });
 
+        req.user = user;
+
         // Set the new access token and refresh token in the response cookies
         res.cookie("accessToken", newAccessToken, accessTokenOptions);
         res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
@@ -411,4 +413,84 @@ const socialAuth = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth };
+/**
+ * Interface representing the request body for updating user information.
+ */
+interface IUpdateUserInfo {
+    name?: string;
+    email?: string;
+}
+
+
+/**
+ * Controller function to update user account details.
+ * 
+ * Algorithm:
+ * 1. Extract updated email and name from the request body.
+ * 2. Retrieve the user ID from the request object.
+ * 3. Find the user by ID in the database.
+ * 4. If the email is provided and it already exists, throw an error.
+ * 5. If the email is provided, update the user's email after sanitizing it.
+ * 6. If the name is provided, update the user's name.
+ * 7. Save the updated user details.
+ * 8. Update the user's data in Redis.
+ * 9. Send a success response indicating that the account details were updated successfully.
+ * 
+ * */
+const updateUserNameEmailInfo = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { email, name } = req.body as IUpdateUserInfo;        
+
+        //  Method 1
+
+        const userId = req.user?._id;
+        const user = await User.findById(userId);
+        console.log("user from updateUserNameEmailInfo", user);
+        
+        if (email && user) {
+            const isEmailExisting = await User.findOne({ email });
+            if (isEmailExisting) {
+                throw new ApiError(400, "Email already exists");
+            }
+            user.email = sanitizeInput(email);
+        }
+
+        if (name && user) {
+            user.name = name;
+        }
+
+        await user?.save();
+        await redis.set(userId, JSON.stringify(user));
+
+        // Fetch the updated user from the database to send in the response
+        const updatedUser = await User.findById(userId);
+
+        // Method 2
+        /* 
+            const sanitizedEmail = email ? sanitizeInput(email) : undefined;
+            const user = await User.findByIdAndUpdate(
+                req.user?.id,
+                {
+                    $set: {
+                        name,
+                        sanitizedEmail
+                    }
+                },
+                {
+                    new: true
+                }
+            ).select("-password -refreshToken");
+        */
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, updatedUser, "Account details updated successfully"));
+
+
+    } catch (error: any) {
+        throw new ApiError(400, error?.message);
+    }
+});
+
+
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo };

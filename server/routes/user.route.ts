@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { activateUser, getUserInfo, loginUser, logoutUser, registerUser, socialAuth, updateAccessToken } from "../controllers/user.controller";
+import { activateUser, getUserInfo, loginUser, logoutUser, registerUser, socialAuth, updateAccessToken, updateUserNameEmailInfo } from "../controllers/user.controller";
 import { verifyJWT } from "../middleware/auth.middleware";
 
 const router = Router();
@@ -11,5 +11,6 @@ router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(updateAccessToken);
 router.route("/getUserInfo").get(verifyJWT, getUserInfo);
 router.route("/social-auth").post(socialAuth);
+router.route("/update-email-name-info").post(verifyJWT, updateUserNameEmailInfo);
 
 export default router;
