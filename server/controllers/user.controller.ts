@@ -527,11 +527,16 @@ const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) =
             throw new ApiError(401, "User not authenticated");
         }
 
-        const userLoggedIn = req.user;
+        const userLoggedIn = await User.findById(req.user?._id);
         console.log("userLoggedIn from changeCurrentPassword", userLoggedIn);
         if (userLoggedIn?.password == undefined) {
             throw new ApiError(400, "Invalid User");
         }
+        
+        // console.log(typeof userLoggedIn.comparePassword === 'function'); // Should print true if comparePassword is a function
+        // console.log(User.schema.methods);
+        // console.log(userLoggedIn.constructor.name);
+
 
         const isPasswordValid = await userLoggedIn?.comparePassword(oldPassword);
         if (!isPasswordValid) {
@@ -545,6 +550,21 @@ const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) =
         userLoggedIn.password = newPassword;
         await userLoggedIn?.save({ validateBeforeSave: false });
         await redis.set(userLoggedIn._id, JSON.stringify(userLoggedIn));
+
+        const data = {
+            user: {
+                name: userLoggedIn?.name,
+                email: userLoggedIn?.email
+            },
+        };
+
+        await sendMail({
+            email: userLoggedIn.email,
+            subject: "Password Updated",
+            template: "password-update-mail.ejs",
+            data: data
+        });
+
 
         return res.status(200).json(new ApiResponse(200, {}, "Passowrd has been updated successfully."));
 
