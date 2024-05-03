@@ -17,6 +17,16 @@ app.use(express.json({ limit: LIMIT }))
 app.use(cookieParser());
 
 
+// connecting cloudinary
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUDNAME,
+    api_key: process.env.CLOUDINARY_APIKEY,
+    api_secret: process.env.CLOUDINARY_APISECRET
+});
+
+
 // routes
 import userRouter from "./routes/user.route";
 
@@ -51,7 +61,7 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
         // Requested route is known, send a specific error response
         return res.status(404).json({ error: `Route ${req.originalUrl} not found` });
     }
-    
+
     // Requested route is unknown, send a generic error response
     const err = new Error(`Requested route ${req.originalUrl} not found`) as any;
     err.statusCode = 404;

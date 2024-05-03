@@ -14,4 +14,4 @@ BASIC SETUP:
 5. User login ✅, logout ✅
 6. User authorization (middleware _verifyJWT_)✅
 7. Generate token, user socials auth ✅, get user info ✅
-8. Update user info, password and avatar 
+8. Update user info ✅, password ✅ and avatar (either using **cloudinary** or imagekit --> _May Change Later_)✅ 

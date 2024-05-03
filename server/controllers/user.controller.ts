@@ -11,6 +11,7 @@ import { accessTokenExpiry, accessTokenOptions, refreshTokenExpiry, refreshToken
 import { redis } from "../db/redis";
 import { getUserDetailsById } from "../services/user.service";
 import { sanitizeInput } from "../utils/sanitizeAuthInput";
+import { v2 as cloudinary } from "cloudinary";
 
 interface IRegistrationUser {
     name: string;
@@ -439,14 +440,14 @@ interface IUpdateUserInfo {
  * */
 const updateUserNameEmailInfo = asyncHandler(async (req: Request, res: Response) => {
     try {
-        const { email, name } = req.body as IUpdateUserInfo;        
+        const { email, name } = req.body as IUpdateUserInfo;
 
         //  Method 1
 
         const userId = req.user?._id;
         const user = await User.findById(userId);
         console.log("user from updateUserNameEmailInfo", user);
-        
+
         if (email && user) {
             const isEmailExisting = await User.findOne({ email });
             if (isEmailExisting) {
@@ -493,4 +494,138 @@ const updateUserNameEmailInfo = asyncHandler(async (req: Request, res: Response)
 });
 
 
-export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo };
+interface IUPdatePassword {
+    oldPassword: string;
+    newPassword: string;
+}
+
+/**
+ * Controller function to change the current password for a user.
+ * 
+ * Algorithm:
+ * 1. Extract the old password and new password from the request body.
+ * 2. Check if the user is authenticated. If not, throw an unauthorized error.
+ * 3. Retrieve the logged-in user from the request object.
+ * 4. If the logged-in user or their password is undefined, throw an error.
+ * 5. Verify if the old password matches the user's current password. If not, throw an error.
+ * 6. Validate the new password to ensure it is at least 6 characters long.
+ * 7. Update the user's password with the new password.
+ * 8. Save the user's updated password without validation.
+ * 9. Send a success response indicating that the password has been updated successfully.
+ * 
+*/
+const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
+    const { oldPassword, newPassword } = req.body as IUPdatePassword;
+
+    if (!oldPassword || !newPassword) {
+        throw new ApiError(400, "Please enter both old and new passwords");
+    }
+
+    try {
+
+        if (!req.user) {
+            throw new ApiError(401, "User not authenticated");
+        }
+
+        const userLoggedIn = req.user;
+        console.log("userLoggedIn from changeCurrentPassword", userLoggedIn);
+        if (userLoggedIn?.password == undefined) {
+            throw new ApiError(400, "Invalid User");
+        }
+
+        const isPasswordValid = await userLoggedIn?.comparePassword(oldPassword);
+        if (!isPasswordValid) {
+            throw new ApiError(400, "Incorrect old password");
+        }
+
+        if (newPassword.length < 6) {
+            throw new ApiError(400, "New password must be at least 6 characters long");
+        }
+
+        userLoggedIn.password = newPassword;
+        await userLoggedIn?.save({ validateBeforeSave: false });
+        await redis.set(userLoggedIn._id, JSON.stringify(userLoggedIn));
+
+        return res.status(200).json(new ApiResponse(200, {}, "Passowrd has been updated successfully."));
+
+    } catch (error: any) {
+        console.error(error);
+    }
+});
+
+
+
+interface IUpdateUserAvatar {
+    avatar: string;
+}
+
+/**
+ * Controller function to update the user's avatar.
+ * 
+ * Algorithm:
+ * 1. Get the avatar image from the request body.
+ * 2. Retrieve the user from the database based on the user ID.
+ * 3. If the user has an existing avatar, delete it from Cloudinary.
+ * 4. Upload the new avatar image to Cloudinary.
+ * 5. Update the user's avatar URL in the database.
+ * 6. Update the user's information in Redis.
+ * 7. Send a success response with the updated user object.
+ * 
+ * @param req Express Request object containing the avatar image in the request body.
+ * @param res Express Response object.
+ * @returns Success response with the updated user object or error response.
+ */
+const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { avatar } = req.body as IUpdateUserAvatar;
+
+        if (!avatar) {
+            throw new ApiError(400, "Avatar image is required");
+        }
+
+        let uploadedAvatarURL;
+
+        const user = await User.findById(req.user?._id).select("-password -refreshToken -accessToken");
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        // If the user already has an avatar, delete it from Cloudinary
+        if (user.avatar?.public_id) {
+            await cloudinary.uploader.destroy(user.avatar.public_id);
+        }
+
+        // Upload the new avatar image to Cloudinary
+        const uploadedAvatar = await cloudinary.uploader.upload(avatar, {
+            folder: "lms_avatars",
+            width: 150, // Set the desired width of the avatar
+            resource_type: "auto"
+        });
+
+        uploadedAvatarURL = uploadedAvatar.secure_url;
+
+        // Update the user's avatar URL in the database
+        user.avatar = {
+            public_id: uploadedAvatar.public_id,
+            url: uploadedAvatar.secure_url
+        };
+
+        await user.save();
+
+        // Update the user's information in Redis
+        await redis.set(req.user?._id, JSON.stringify(user));
+
+        // Send a success response with the updated user object
+        return res.status(200).json(new ApiResponse(200, user, "User avatar updated successfully"));
+
+    } catch (error: any) {
+        console.error(error);
+        throw new ApiError(500, "Failed to update user avatar");
+    }
+});
+
+
+
+
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar };
