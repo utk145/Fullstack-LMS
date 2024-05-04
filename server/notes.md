@@ -15,3 +15,9 @@ BASIC SETUP:
 6. User authorization (middleware _verifyJWT_)✅
 7. Generate token, user socials auth ✅, get user info ✅
 8. Update user info ✅, password ✅ and avatar (either using **cloudinary** or imagekit --> _May Change Later_)✅ 
+
+
+
+### Course Model and Course Creation 
+1. Course model design ✅
+2. Create course, edit course
