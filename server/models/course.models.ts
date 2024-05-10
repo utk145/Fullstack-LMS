@@ -34,7 +34,7 @@ interface ICourseData extends Document {
     title: string;
     description: string;
     videoUrl: string;
-    videoThumbnail: object;
+    // videoThumbnail: object;
     videoSection: string;
     videoDuration: number;
     videoPlayer: string;
@@ -89,7 +89,7 @@ const commentSchema = new mongoose.Schema<IComment>({
 // Define the schema for course data
 const courseDataSchema = new mongoose.Schema<ICourseData>({
     videoUrl: String,
-    videoThumbnail: Object,
+    // videoThumbnail: Object,
     title: String,
     videoSection: String,
     description: String,
@@ -118,11 +118,11 @@ const courseSchema = new mongoose.Schema<ICourse>({
     thumbnail: {
         public_id: {
             type: String,
-            required: true,
+            // required: true,
         },
         url: {
             type: String,
-            required: true,
+            // required: true,
         },
     },
     tags: {

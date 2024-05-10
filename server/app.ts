@@ -29,11 +29,13 @@ cloudinary.config({
 
 // routes
 import userRouter from "./routes/user.route";
+import courseRouter from "./routes/course.route";
 
 
 
 // routes declaration
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/courses", courseRouter);
 
 
 
