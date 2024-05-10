@@ -73,37 +73,42 @@ const editCourse = asyncHandler(async (req: Request, res: Response) => {
     try {
         const data = req.body;
 
-        // Check if thumbnail is provided
-        if (data.thumbnail) {
-            // Delete the old thumbnail from Cloudinary
-            await cloudinary.v2.uploader.destroy(data.thumbnail.public_id);
+        // Get the course ID from the request parameters
+        const courseId = req.params.id;
+
+        // Find the existing course in the database
+        const existingCourse = await Course.findById(courseId);
+
+        // Check if the course exists
+        if (!existingCourse) {
+            return res.status(404).json(new ApiResponse(404, null, "Course not found."));
+        }
+
+        // Check if the thumbnail data is provided and different from the existing thumbnail
+        // @ts-ignore
+        if (data.thumbnail && data.thumbnail.public_id !== existingCourse.thumbnail.public_id) {
+            // Destroy the old thumbnail from Cloudinary
+            // @ts-ignore
+            await cloudinary.v2.uploader.destroy(existingCourse.thumbnail.public_id);
 
             // Upload the new thumbnail to Cloudinary
             const uploadedThumbnail = await cloudinary.v2.uploader.upload(data.thumbnail.url, {
                 folder: "lms_courses_thumbnails"
             });
 
-            // Update thumbnail data in the course data
+            // Update the thumbnail data in the course data
             data.thumbnail = {
                 public_id: uploadedThumbnail.public_id,
                 url: uploadedThumbnail.secure_url
             };
         }
 
-        const courseId = req.params.id;
-
-        // Update the course in the database
+        // Update the course data in the database
         const updatedCourse = await Course.findByIdAndUpdate(
             courseId,
             { $set: data },
             { new: true }
         );
-
-        // Check if the course was found and updated
-        if (!updatedCourse) {
-            // If the course was not found, return a 404 error
-            return res.status(404).json(new ApiResponse(404, null, "Course not found."));
-        }
 
         // Send success response with the updated course data
         res.status(200).json(new ApiResponse(200, updatedCourse, "Course updated successfully."));
@@ -113,6 +118,7 @@ const editCourse = asyncHandler(async (req: Request, res: Response) => {
         res.status(500).json(new ApiResponse(500, null, "Failed to edit course. Please try again later."));
     }
 });
+
 
 
 
