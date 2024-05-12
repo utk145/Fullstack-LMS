@@ -3,6 +3,7 @@ import cloudinary from "cloudinary";
 import { Course } from "../models/course.models";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError";
 
 /**
  * Function to handle the upload of a course.
@@ -121,5 +122,54 @@ const editCourse = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+/**
+ * Controller function to fetch details of a single course without requiring purchase.
+ * Everyone should be able to access this route
+ * @returns Response with the details of the requested course or error response.
+ */
+const getSingleCourse = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        // Find the course by its ID, excluding certain sensitive data from the response
+        const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestions -courseData.questions -courseData.links");
 
-export { uploadCourse, editCourse };
+        // If the course is not found, return a 404 error
+        if (!course) {
+            return res.status(404).json(new ApiResponse(404, null, "Course not found."));
+        }
+
+        // Send success response with the course details
+        return res.status(200).json(new ApiResponse(200, course));
+
+    } catch (error: any) {
+        // Handle errors
+        console.error("Error fetching course:", error.message);
+        return res.status(500).json(new ApiError(500, "Failed to fetch course. Please try again later."));
+    }
+});
+
+
+
+/**
+ * Controller function to fetch details of all courses without requiring purchase.
+ * Everyone should be able to access this route.
+ * @returns Response with the details of all courses or error response.
+ */
+const getAllCourses = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        // Fetch all courses
+        const courses = await Course.find().select("-courseData.videoUrl -courseData.suggestions -courseData.questions -courseData.links");
+
+        // Send success response with the courses
+        return res.status(200).json(new ApiResponse(200, courses));
+
+    } catch (error: any) {
+        // Handle errors
+        console.error("Error fetching courses:", error.message);
+        return res.status(500).json(new ApiError(500, "Failed to fetch courses. Please try again later."));
+    }
+});
+
+
+
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses };

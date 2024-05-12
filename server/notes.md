@@ -20,4 +20,5 @@ BASIC SETUP:
 
 ### Course Model and Course Creation 
 1. Course model design ✅
-2. Create course, edit course
+2. Create course ✅, edit course ✅
+3. Get single and all courses --without purchasing ✅
