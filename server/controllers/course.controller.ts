@@ -137,7 +137,7 @@ const getSingleCourse = asyncHandler(async (req: Request, res: Response) => {
             const course = JSON.parse(isRedisCached);
             return res.status(200).json(new ApiResponse(200, course));
         }
-        
+
         // Find the course by its ID, excluding certain sensitive data from the response
         const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestions -courseData.questions -courseData.links");
 
@@ -192,7 +192,43 @@ const getAllCourses = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
+/**
+ * Controller function to fetch the content of a course accessible by a user.
+ * 
+ * @param req Express Request object.
+ * @param res Express Response object.
+ * @returns Response with the content of the accessible course or error response.
+ */
+const getCourseAccessibleByUser = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        // Get the list of courses accessible by the user from the request object
+        const userCoursesList = req.user?.courses;
+
+        // Extract the course ID from the request parameters
+        const courseId = req.params.id;        
+
+        // Check if the course exists in the user's list of accessible courses
+        const isCourseExists = userCoursesList?.find((course: any) => course?._id.toString() === courseId);
+
+        // If the course is not found in the user's accessible courses, throw a 404 error
+        if (!isCourseExists) {
+            throw new ApiError(404, "Dear user, you aren't eligible to access this course.")
+        }
+
+        // Find the course by its ID and Extract the course content
+        const course = await Course.findById(courseId);
+        const courseContent = course?.courseData;
+
+        // Send success response with the course content
+        return res
+            .status(200)
+            .json(new ApiResponse(200, courseContent, "Course content fetched successfully"));
+
+    } catch (error: any) {
+        console.error("Error checking course accessibility:", error.message);
+        return res.status(500).json(new ApiError(500, "Failed to check course accessibility. Please try again later."));
+    }
+});
 
 
-
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses };
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser };

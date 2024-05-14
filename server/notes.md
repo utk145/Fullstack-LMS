@@ -22,3 +22,4 @@ BASIC SETUP:
 1. Course model design ✅
 2. Create course ✅, edit course ✅
 3. Get single and all courses --without purchasing ✅
+4. Get course content, get user accessible all courses -- only for valid user ✅
