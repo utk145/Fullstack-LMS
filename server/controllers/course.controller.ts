@@ -4,6 +4,7 @@ import { Course } from "../models/course.models";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
+import { redis } from "../db/redis";
 
 /**
  * Function to handle the upload of a course.
@@ -129,6 +130,14 @@ const editCourse = asyncHandler(async (req: Request, res: Response) => {
  */
 const getSingleCourse = asyncHandler(async (req: Request, res: Response) => {
     try {
+
+        const courseId = req.params.id;
+        const isRedisCached = await redis.get(courseId);
+        if (isRedisCached) {
+            const course = JSON.parse(isRedisCached);
+            return res.status(200).json(new ApiResponse(200, course));
+        }
+        
         // Find the course by its ID, excluding certain sensitive data from the response
         const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestions -courseData.questions -courseData.links");
 
@@ -136,7 +145,7 @@ const getSingleCourse = asyncHandler(async (req: Request, res: Response) => {
         if (!course) {
             return res.status(404).json(new ApiResponse(404, null, "Course not found."));
         }
-
+        await redis.set(courseId, JSON.stringify(course));
         // Send success response with the course details
         return res.status(200).json(new ApiResponse(200, course));
 
@@ -156,8 +165,21 @@ const getSingleCourse = asyncHandler(async (req: Request, res: Response) => {
  */
 const getAllCourses = asyncHandler(async (req: Request, res: Response) => {
     try {
-        // Fetch all courses
+        // Check if courses are cached in Redis
+        const isRedisCached = await redis.get("allCourses");
+        if (isRedisCached) {
+            const courses = JSON.parse(isRedisCached);
+            // console.log("hitting redis");
+            return res.status(200).json(new ApiResponse(200, courses));
+        }
+
+        // console.log("hitting mongo");
+
+        // If not cached, fetch all courses from the database
         const courses = await Course.find().select("-courseData.videoUrl -courseData.suggestions -courseData.questions -courseData.links");
+
+        // Cache the fetched courses in Redis
+        await redis.set("allCourses", JSON.stringify(courses));
 
         // Send success response with the courses
         return res.status(200).json(new ApiResponse(200, courses));
@@ -168,6 +190,7 @@ const getAllCourses = asyncHandler(async (req: Request, res: Response) => {
         return res.status(500).json(new ApiError(500, "Failed to fetch courses. Please try again later."));
     }
 });
+
 
 
 
