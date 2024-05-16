@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { redis } from "../db/redis";
+import mongoose from "mongoose";
 
 /**
  * Function to handle the upload of a course.
@@ -205,7 +206,7 @@ const getCourseAccessibleByUser = asyncHandler(async (req: Request, res: Respons
         const userCoursesList = req.user?.courses;
 
         // Extract the course ID from the request parameters
-        const courseId = req.params.id;        
+        const courseId = req.params.id;
 
         // Check if the course exists in the user's list of accessible courses
         const isCourseExists = userCoursesList?.find((course: any) => course?._id.toString() === courseId);
@@ -231,4 +232,58 @@ const getCourseAccessibleByUser = asyncHandler(async (req: Request, res: Respons
 });
 
 
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser };
+interface IAddQuestion {
+    question: string;
+    courseId: string;
+    contentId: string;
+}
+
+const addQuestion = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { contentId, courseId, question } = req.body as IAddQuestion;
+        // console.log("contentId", contentId, "courseId", courseId, "question", question);
+
+        const courseExists = await Course.findById(courseId);
+        // console.log(courseExists); // debug-purpose
+        
+
+        if (!courseExists) {
+            throw new ApiError(404, "Course not found");
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(contentId)) {
+            throw new ApiError(400, "Invalid contentId");
+        }
+
+        const courseContent = courseExists?.courseData?.find((course: any) => course._id.equals(contentId));
+        if (!courseContent) {
+            throw new ApiError(400, "Invalid contentId");
+        }
+        // console.log("\n\n courseContent:\n",courseContent); // debug-purpose
+
+        // create  a new question object
+        const newQuestion: any = {
+            comment: question,
+            user: req.user,
+            commentReplies: [],
+        }
+
+        // add this question to courseContent
+        courseContent.questions.push(newQuestion);
+
+        await courseExists.save();
+        // console.log(courseContent);
+
+        // const upodatedcourseExists = await Course.findById(courseId); // debug-purpose
+        // console.log("\n\n upodatedcourseExists:\n",upodatedcourseExists); // debug-purpose
+        
+
+        return res.status(201).json(new ApiResponse(201, newQuestion, "Question added successfully"));
+
+
+    } catch (error: any) {
+        throw new ApiError(500, error?.message);
+    }
+});
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion };
