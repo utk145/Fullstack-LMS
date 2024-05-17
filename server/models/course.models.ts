@@ -1,10 +1,11 @@
 import mongoose, { Document } from "mongoose";
+import { IUser } from "./user.models";
 
 /**
  * Interface representing a comment within a course.
  */
 interface IComment extends Document {
-    user: object;
+    user: IUser;
     comment: string;
     commentReplies?: IComment[];
 }

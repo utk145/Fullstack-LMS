@@ -33,7 +33,7 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
 
         // Verify the access token
         const decodedTokenInfo: any = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET! as string);
-        console.log("decoded from verifyJWT", decodedTokenInfo);
+        // console.log("decoded from verifyJWT", decodedTokenInfo);
         if (!decodedTokenInfo) {
             throw new ApiError(400, "Invalid access token info");
         }
@@ -41,7 +41,7 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
 
         // Retrieve the user from Redis based on the decoded token info
         const user = await redis.get(decodedTokenInfo?._id || decodedTokenInfo?.id);
-        console.log("user from veirfyJWT-- ", user);
+        // console.log("user from veirfyJWT-- ", user);
 
         if (!user) {
             throw new ApiError(401, "Invalid user access or invalid token");

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You've received new replies</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        p {
+            color: #555555;
+            line-height: 1.8;
+            margin: 10px 0;
+        }
+
+        .reply-link {
+            display: inline-block;
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 15px 25px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .reply-link:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777777;
+            font-size: 12px;
+        }
+
+        .social-icons {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .social-icons a {
+            margin: 0 10px;
+            display: inline-block;
+        }
+
+        .social-icons img {
+            width: 30px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .social-icons img:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>You've Received Replies</h1>
+        </div>
+        <p>Hello <%= name %>,</p>
+        <p>You have new replies to your post:</p>
+        <p><b><em>"<%= postTitle %>"</em></b></p>
+        <!-- <a href="#" class="reply-link">View Replies</a> -->
+        <p>If you have any questions or need further assistance, feel free to reach out.</p>
+        <p>Thank you for being an active member of the community !</p>
+        <div class="social-icons">
+            <a href="https://facebook.com"><img src="https://cdn-icons-png.flaticon.com/512/3670/3670032.png" alt="Facebook"></a>
+            <a href="https://twitter.com"><img src="https://cdn-icons-png.flaticon.com/512/11823/11823292.png" alt="Twitter"></a>
+            <a href="https://linkedin.com"><img src="https://cdn-icons-png.flaticon.com/512/3536/3536505.png" alt="LinkedIn"></a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 Your Company. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { redis } from "../db/redis";
 import mongoose from "mongoose";
+import sendMail from "../utils/sendMail";
 
 /**
  * Function to handle the upload of a course.
@@ -231,30 +232,38 @@ const getCourseAccessibleByUser = asyncHandler(async (req: Request, res: Respons
     }
 });
 
-
+/**
+ * Interface representing the structure of the add question request body.
+ */
 interface IAddQuestion {
     question: string;
     courseId: string;
     contentId: string;
 }
 
+/**
+ * Controller function to add a question to a course's content.
+ * */
 const addQuestion = asyncHandler(async (req: Request, res: Response) => {
     try {
         const { contentId, courseId, question } = req.body as IAddQuestion;
         // console.log("contentId", contentId, "courseId", courseId, "question", question);
 
+        // Check if the course exists
         const courseExists = await Course.findById(courseId);
         // console.log(courseExists); // debug-purpose
-        
+
 
         if (!courseExists) {
             throw new ApiError(404, "Course not found");
         }
 
+        // Ensure the content ID is a valid MongoDB ObjectId
         if (!mongoose.Types.ObjectId.isValid(contentId)) {
             throw new ApiError(400, "Invalid contentId");
         }
 
+        //   Locate the course content within the course's data array that matches the provided content ID
         const courseContent = courseExists?.courseData?.find((course: any) => course._id.equals(contentId));
         if (!courseContent) {
             throw new ApiError(400, "Invalid contentId");
@@ -276,7 +285,7 @@ const addQuestion = asyncHandler(async (req: Request, res: Response) => {
 
         // const upodatedcourseExists = await Course.findById(courseId); // debug-purpose
         // console.log("\n\n upodatedcourseExists:\n",upodatedcourseExists); // debug-purpose
-        
+
 
         return res.status(201).json(new ApiResponse(201, newQuestion, "Question added successfully"));
 
@@ -286,4 +295,114 @@ const addQuestion = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion };
+
+
+/**
+ * Interface representing the structure of the add answer request body.
+ */
+interface IAddAnswer {
+    courseId: string;
+    contentId: string;
+    questionId: string;
+    answer: string;
+
+}
+
+/**
+ * Controller function to add an answer/reply to a specific question in a course's content.
+ * 
+*/
+const replyToQuestion = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { courseId, contentId, questionId, answer } = req.body as IAddAnswer;
+
+        // Step 1: Validate the input fields
+        // Check if any of the required fields are empty or contain only whitespace
+        if ([courseId, contentId, questionId, answer].some((item) => item?.trim() === "")) {
+            throw new ApiError(400, "All fields are compulsory..");
+        }
+
+        // Step 2: Check if the course exists
+        // Retrieve the course document from the database using the provided course ID
+        const courseExists = await Course.findById(courseId);
+
+        if (!courseExists) {
+            throw new ApiError(404, "Course not found");
+        }
+
+        // Step 3: Validate the content ID
+        // Ensure the content ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(contentId)) {
+            throw new ApiError(400, "Invalid contentId");
+        }
+
+        // Step 4: Find the specific course content by its ID
+        // Locate the course content within the course's data array that matches the provided content ID
+        const courseContent = courseExists?.courseData?.find((course: any) => course._id.equals(contentId));
+        if (!courseContent) {
+            throw new ApiError(400, "Invalid contentId");
+        }
+
+        // Step 5: Find the specific question by its ID
+        const questionToReply = courseContent?.questions?.find((item: any) => item?._id.equals(questionId));
+        if (!questionToReply) {
+            throw new ApiError(400, "Invalid questionId");
+        }
+
+        //  // Step 6: Create a new answer object
+        const newAnswer: any = {
+            user: req.user,
+            answer,
+        }
+
+        // Step 7: Add the new answer to the question's replies
+        // Append the new answer to the commentReplies array of the located question
+        questionToReply.commentReplies?.push(newAnswer);
+
+        // Step 8: Save the updated course document
+        // Persist the changes to the course document in the database
+        await courseExists.save();
+
+        // Step 9: Send notifications if applicable
+        const user = req?.user;
+        if (user && user?._id === questionToReply.user?._id) {
+            // TODO: create a notification
+            // If the user replying is the same as the user who asked the question, create a notification (TODO)
+        } else {
+            // If an admin or another user is replying, send an email notification to the original question asker
+
+            const data = {
+                name: questionToReply.user.name,
+                email: questionToReply.user.email,
+                postTitle: questionToReply.comment,
+            };
+
+            try {
+                user && await sendMail({
+                    data,
+                    // email: user?.email,
+                    email: questionToReply?.user?.email,
+                    subject: "You've received replies",
+                    template: "question-reply.ejs"
+                })
+                    .then(() => console.log("mail sennt"))
+                    .catch(() => console.log("mail not sennt"))
+
+            } catch (error: any) {
+                console.error('Failed to send email because:', error);
+            }
+        }
+
+
+        // Step 10: Send a success response with the updated course data
+        const course = await Course.findById(courseId);
+
+        return res.status(200).json(new ApiResponse(200, course, "New replies received"));
+
+    } catch (error: any) {
+        throw new ApiError(500, error?.message);
+    }
+});
+
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion };

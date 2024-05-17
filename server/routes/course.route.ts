@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addQuestion, editCourse, getAllCourses, getCourseAccessibleByUser, getSingleCourse, uploadCourse } from "../controllers/course.controller";
+import { addQuestion, editCourse, getAllCourses, getCourseAccessibleByUser, getSingleCourse, replyToQuestion, uploadCourse } from "../controllers/course.controller";
 import { authorizeRoles, verifyJWT } from "../middleware/auth.middleware";
 
 const router = Router();
@@ -10,5 +10,6 @@ router.route("/get-single-course-details/:id").get(getSingleCourse)
 router.route("/get-all-course-details").get(getAllCourses)
 router.route("/get-user-course/:id").get(verifyJWT, getCourseAccessibleByUser);
 router.route("/add-question").post(verifyJWT, addQuestion);
+router.route("/reply-to-question").post(verifyJWT, replyToQuestion);
 
 export default router;
