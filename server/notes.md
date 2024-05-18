@@ -24,3 +24,4 @@ BASIC SETUP:
 3. Get single and all courses --without purchasing ✅
 4. Get course content, get user accessible all courses -- only for valid user ✅
 5. Create question ✅, add reply in question ✅
+6. Add review in course ✅

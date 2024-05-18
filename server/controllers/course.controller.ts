@@ -310,6 +310,8 @@ interface IAddAnswer {
 
 /**
  * Controller function to add an answer/reply to a specific question in a course's content.
+ * @route POST /api/v1/courses/reply-to-question
+ * @access Protected (requires authentication)
  * 
 */
 const replyToQuestion = asyncHandler(async (req: Request, res: Response) => {
@@ -405,4 +407,88 @@ const replyToQuestion = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion };
+
+/**
+ * @description Adds a review to a course by a user who has enrolled in the course.
+ * @route POST /api/v1/courses/add-review/:id
+ * @access Protected (requires authentication)
+ */
+const addReviewInCourse = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const userCoursesList = req.user?.courses;
+        const courseId = req.params.id;
+
+        /* Theres no point in checking if the course is valid, rather it should be valid or accessible from the user's enrolled courses.
+                const courseExists = await Course.findById(courseId);
+                if (!courseExists) {
+                    throw new ApiError(400, "Course not found!");
+                }
+        */
+
+        // check if courseId exists in userCoursesList based on _id
+        const courseExists = userCoursesList?.some((item: any) => item._id.toString() === courseId.toString());
+        if (!courseExists) {
+            throw new ApiError(400, `Dear user, you aren't eligible to make a review on this course.`);
+        }
+
+        // Fetch the course from the database
+        const course = await Course.findById(courseId);
+
+        const { review, rating } = req.body;
+
+        // Validate the review and rating
+        if (!review || typeof review !== 'string') {
+            throw new ApiError(400, "Review must be a valid string");
+        }
+
+        if (!rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
+            throw new ApiError(400, "Rating must be a number between 1 and 5");
+        }
+
+        // Create a new review object
+        const newReview: any = {
+            user: req.user,
+            comment: review,
+            rating: rating,
+        };
+
+        // Add the new review to the course's reviews
+        course?.reviews.push(newReview);
+
+        let total = 0;
+        course?.reviews.forEach((rev: any) => {
+            total += rev.rating;
+        });
+      
+        // console.log("before", course?.ratings);
+
+        if (course) {
+            course.ratings = total / course?.reviews.length;
+            // example: we've two reviews, one is 5 and other 4, then the rating calculates to be 5 + 4  / 2 = 4.5  
+        }
+
+        // Save the updated course document
+        await course?.save();
+
+        // console.log("after", course?.ratings);
+
+        // Prepare a notification object (to be implemented)
+        const notification = {
+            title: "New review received",
+            message: `${req.user?.name} has given a review in course ${course?.name} }`,
+        };
+
+        // TODO: create a notification
+
+        // Return a success response with the updated course data
+        return res.status(200).json(new ApiResponse(200, course));
+
+
+    } catch (error: any) {
+        // Handle errors and return a 500 Internal Server Error response
+        throw new ApiError(500, error?.message);
+    }
+});
+
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse };

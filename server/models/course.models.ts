@@ -14,10 +14,10 @@ interface IComment extends Document {
  * Interface representing a review within a course.
  */
 interface IReview extends Document {
-    user: object;
+    user: IUser;
     rating: number;
     comment: string;
-    commentReplies: IComment[]; // Only admin can reply. Need to validate from frontend
+    commentReplies?: IComment[]; // Only admin can reply. Need to validate from frontend
 }
 
 /**
