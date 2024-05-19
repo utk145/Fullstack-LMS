@@ -72,6 +72,7 @@ const reviewSchema = new mongoose.Schema<IReview>({
         default: 0,
     },
     comment: String,
+    commentReplies: [Object],
 });
 
 // Define the schema for links

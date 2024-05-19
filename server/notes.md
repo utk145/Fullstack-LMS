@@ -4,6 +4,23 @@ BASIC SETUP:
 
     - npm i bcryptjs cookie-parser cors express ioredis jsonwebtoken mongoose ts-node-dev @types/bcryptjs @types/cookie-parser @types/cors @types/express @types/node @types/jsonwebtoken typescript
 
+---
+- Good commit practices :-
+
+```
+    feat -> feature
+    fix -> bug fix
+    docs -> documentation
+    style -> formatting, lint stuff
+    refactor -> code restructure without changing external behavior
+    test -> adding missing tests
+    chore -> maintenance
+    init -> initial commit
+    rearrange -> files moved, added, deleted etc
+    update -> update code (versions, library compatibility)
+```
+---
+
 
 ## PLAN:     
 ### Handle Errors and User authentication

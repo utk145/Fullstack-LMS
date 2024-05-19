@@ -459,7 +459,7 @@ const addReviewInCourse = asyncHandler(async (req: Request, res: Response) => {
         course?.reviews.forEach((rev: any) => {
             total += rev.rating;
         });
-      
+
         // console.log("before", course?.ratings);
 
         if (course) {
@@ -491,4 +491,74 @@ const addReviewInCourse = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse };
+
+/**
+ * Interface for adding a reply to a review.
+ */
+interface IAddReplyReview {
+    comment: string;
+    courseId: string;
+    reviewId: string;
+}
+
+/**
+ * @description Adds a reply to a review in a course.
+ * @access Protected (requires authentication)
+ */
+const addReplyToReviews = asyncHandler(async (req: Request, res: Response) => {
+
+    try {
+        const { comment, courseId, reviewId } = req.body as IAddReplyReview;
+
+        // Validate request data
+        if (!comment || !courseId || !reviewId) {
+            throw new ApiError(400, "All fields (comment, courseId, reviewId) are required");
+        }
+
+        // Ensure the courseId is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(courseId)) {
+            throw new ApiError(400, "Invalid courseId");
+        }
+
+        // Ensure the reviewId is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+            throw new ApiError(400, "Invalid reviewId");
+        }
+
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            throw new ApiError(404, "Course not found");
+        }
+
+        const review = course?.reviews?.find((item: any) => item._id.toString() === reviewId);
+        if (!review) {
+            throw new ApiError(404, "Review not found");
+        }
+
+        // Create a new comment reply object
+        const newCommentReply: any = {
+            user: req.user,
+            comment,
+        };
+
+        // Initialize the commentReplies array if it doesn't exist
+        if (!review?.commentReplies) {
+            review.commentReplies = [];
+        }
+
+        // Add the new comment reply to the review's commentReplies array
+        review?.commentReplies?.push(newCommentReply);
+
+        await course.save()
+
+        return res.status(200).json(new ApiResponse(200, "Replied successfully!"));
+
+    } catch (error: any) {
+        // Handle errors and return a 500 Internal Server Error response
+        throw new ApiError(500, error?.message);
+    }
+
+});
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse, addReplyToReviews };
