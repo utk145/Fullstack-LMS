@@ -6,7 +6,7 @@ import mongoose, { Model } from "mongoose";
 export interface IOrder extends Document {
     courseId: string;
     userId: string;
-    payment_info: object;
+    payment_info?: object;
 }
 
 

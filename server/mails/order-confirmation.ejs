@@ -1,0 +1,464 @@
+
+    <!-- BASIC TEMPLATE 1.     -->
+    
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #2a9d8f;
+        }
+
+        .order-details {
+            margin: 20px 0;
+        }
+
+        .order-details h2 {
+            margin-bottom: 10px;
+            color: #e76f51;
+        }
+
+        .order-details p {
+            margin: 5px 0;
+        }
+
+        .order-details p span {
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: #888;
+        }
+
+        .footer a {
+            color: #2a9d8f;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmation</h1>
+        </div>
+        <div class="order-details">
+            <h2>Thank you for your purchase!</h2>
+            <p>Your order has been confirmed and is being processed. Below are the details of your order:</p>
+            <p><span>Order ID:</span> <%= order._id %></p>
+            <p><span>Course Name:</span> <%= order.name %></p>
+            <p><span>Price:</span> $<%= order.price.toFixed(2) %></p>
+            <p><span>Date:</span> <%= order.date %></p>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, feel free to <a href="mailto:support@example.com">contact our support team</a>.</p>
+            <p>&copy; <%= new Date().getFullYear() %> Your Company Name. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>
+
+<!-- 
+
+    TEMPLATE 2: With pulse and glow effect
+    
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px rgba(42, 157, 143, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(42, 157, 143, 1);
+            }
+            100% {
+                text-shadow: 0 0 5px rgba(42, 157, 143, 0.5);
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-in-out, pulse 2s infinite ease-in-out;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            animation: slideIn 1s ease-in-out, glow 2s infinite ease-in-out;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #2a9d8f;
+        }
+
+        .order-details {
+            margin: 20px 0;
+            animation: slideIn 1s ease-in-out 0.5s;
+            animation-fill-mode: forwards;
+            opacity: 0;
+        }
+
+        .order-details h2 {
+            margin-bottom: 10px;
+            color: #e76f51;
+        }
+
+        .order-details p {
+            margin: 5px 0;
+        }
+
+        .order-details p span {
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: #888;
+            animation: slideIn 1s ease-in-out 1s;
+            animation-fill-mode: forwards;
+            opacity: 0;
+        }
+
+        .footer a {
+            color: #2a9d8f;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmation</h1>
+        </div>
+        <div class="order-details">
+            <h2>Thank you for your purchase!</h2>
+            <p>Your order has been confirmed and is being processed. Below are the details of your order:</p>
+            <p><span>Order ID:</span> <%= order._id %></p>
+            <p><span>Course Name:</span> <%= order.name %></p>
+            <p><span>Price:</span> $<%= order.price.toFixed(2) %></p>
+            <p><span>Date:</span> <%= order.date %></p>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, feel free to <a href="mailto:support@example.com">contact our support team</a>.</p>
+            <p>&copy; <%= new Date().getFullYear() %> Your Company Name. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html> -->
+
+
+
+<!--  TEMPLATE 3 -With both confettis falling and pulse effect -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px rgba(42, 157, 143, 0.5);
+            }
+
+            50% {
+                text-shadow: 0 0 20px rgba(42, 157, 143, 1);
+            }
+
+            100% {
+                text-shadow: 0 0 5px rgba(42, 157, 143, 0.5);
+            }
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-in-out, pulse 2s infinite ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            animation: slideIn 1s ease-in-out, glow 2s infinite ease-in-out;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #2a9d8f;
+        }
+
+        .order-details {
+            margin: 20px 0;
+            animation: slideIn 1s ease-in-out 0.5s;
+            animation-fill-mode: forwards;
+            opacity: 0;
+        }
+
+        .order-details h2 {
+            margin-bottom: 10px;
+            color: #e76f51;
+        }
+
+        .order-details p {
+            margin: 5px 0;
+        }
+
+        .order-details p span {
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: #888;
+            animation: slideIn 1s ease-in-out 1s;
+            animation-fill-mode: forwards;
+            opacity: 0;
+        }
+
+        .footer a {
+            color: #2a9d8f;
+            text-decoration: none;
+        }
+
+        .confetti {
+            position: fixed;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            background-color: #e76f51;
+            opacity: 0.8;
+            animation: confetti-fall 5s linear infinite;
+            z-index: 3;
+        }
+
+        .confetti:nth-child(2n) {
+            background-color: #2a9d8f;
+        }
+
+        .confetti:nth-child(3n) {
+            background-color: #e9c46a;
+        }
+
+        .confetti:nth-child(4n) {
+            background-color: #f4a261;
+        }
+
+        .confetti:nth-child(5n) {
+            background-color: #264653;
+        }
+
+        .confetti:nth-child(odd) {
+            animation-duration: 7s;
+        }
+
+        .confetti:nth-child(even) {
+            animation-duration: 5s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmation</h1>
+        </div>
+        <div class="order-details">
+            <h2>Thank you for your purchase!</h2>
+            <p>Your order has been confirmed and is being processed. Below are the details of your order:</p>
+            <p><span>Order ID:</span>
+                <%= order._id %>
+            </p>
+            <p><span>Course Name:</span>
+                <%= order.name %>
+            </p>
+            <p><span>Price:</span> $<%= order.price.toFixed(2) %>
+            </p>
+            <p><span>Date:</span>
+                <%= order.date %>
+            </p>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, feel free to <a href="#">contact our support
+                    team</a>.</p>
+            <p>&copy; <%= new Date().getFullYear() %> Your Company Name. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.left = Math.random() * 100 + 'vw';
+            document.body.appendChild(confetti);
+
+            setTimeout(() => {
+                confetti.remove();
+            }, 7000);
+        }
+
+        setInterval(createConfetti, 200);
+    </script>
+</body>
+
+</html> -->
