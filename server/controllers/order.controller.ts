@@ -82,6 +82,14 @@ const createOrder = asyncHandler(async (req: Request, res: Response) => {
             message: `You've obtained a new order from ${user?.name} for the course ${course?.name} `,
         });
 
+        // Increment the purchases count for the course
+        if (course.purchases) {
+            course.purchases += 1;
+        } else {
+            course.purchases = 1;
+        }
+        await course?.save();
+
         // Send success response with the order details
         return res.status(201).json(new ApiResponse(201, { order: course }, "Order created"))
 
