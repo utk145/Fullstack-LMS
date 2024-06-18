@@ -42,3 +42,9 @@ BASIC SETUP:
 4. Get course content, get user accessible all courses -- only for valid user ✅
 5. Create question ✅, add reply in question ✅
 6. Add review in course ✅
+
+
+### Order and Notifications
+1. Order and notification model ✅
+2. Create order ✅
+3. Get all notifications ✅, update notification status ✅
