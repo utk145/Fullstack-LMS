@@ -7,6 +7,7 @@ import { ApiError } from "../utils/ApiError";
 import { redis } from "../db/redis";
 import mongoose from "mongoose";
 import sendMail from "../utils/sendMail";
+import { Notification } from "../models/notification.model";
 
 /**
  * Function to handle the upload of a course.
@@ -280,6 +281,14 @@ const addQuestion = asyncHandler(async (req: Request, res: Response) => {
         // add this question to courseContent
         courseContent.questions.push(newQuestion);
 
+
+        // Create a notification for the admin dashboard
+        await Notification.create({
+            userId: req.user?._id,
+            title: "New Question Received",
+            message: `You've a new question from ${req.user?.name} in  ${courseContent?.title} `,
+        });
+
         await courseExists.save();
         // console.log(courseContent);
 
@@ -368,8 +377,13 @@ const replyToQuestion = asyncHandler(async (req: Request, res: Response) => {
         // Step 9: Send notifications if applicable
         const user = req?.user;
         if (user && user?._id === questionToReply.user?._id) {
-            // TODO: create a notification
-            // If the user replying is the same as the user who asked the question, create a notification (TODO)
+            // create a notification
+            // If the user replying is the same as the user who asked the question, create a notification
+            await Notification.create({
+                userId: user._id,
+                title: 'New question reply received',
+                message: `You've a new question reply in ${courseContent.title}`
+            })
         } else {
             // If an admin or another user is replying, send an email notification to the original question asker
 
