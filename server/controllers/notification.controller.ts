@@ -4,7 +4,7 @@ import { Notification } from "../models/notification.model";
 import { ApiError } from "../utils/ApiError";
 import logger from "../utils/logging/logger";
 import { ApiResponse } from "../utils/ApiResponse";
-
+import cron from "node-cron";
 
 /**
  * Controller function to fetch all notifications.
@@ -59,5 +59,16 @@ const updateNotificationStatus = asyncHandler(async (req: Request, res: Response
     }
 });
 
+
+/**
+ * Cron job runs every day at midnight.
+ * Scheduled function to delete notifications that are older than 30 days.
+ * @access Protected (requires authentication) - only for admins
+ */
+cron.schedule("0 0 0 * * *", async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await Notification.deleteMany({ status: "read", createdAt: { $lt: thirtyDaysAgo } });
+    logger.info("Deleted read notifications older than 30 days");
+});
 
 export { getAllNotifications, updateNotificationStatus };
