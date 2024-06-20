@@ -666,4 +666,29 @@ const getAllUsersForAdmin = asyncHandler(async (req: Request, res: Response) => 
 });
 
 
-export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar, getAllUsersForAdmin };
+
+/**
+ * Controller function to update user role.
+ * @access Only admin can update user role.
+ * 
+ * Algorithm:
+ * 1. Extract the user ID and role from the request body.
+ * 2. Retrieve and update the user's role in the database.
+ * 3. Send a success response with the updated user object.
+*/
+
+const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { userId, role } = req.body;
+        const user = await User.findByIdAndUpdate(userId, { role }, { new: true }); // new: true to create a new document if it doesn't exist
+
+        return res.status(200).json(new ApiResponse(200, user, "User role updated successfully"));
+
+    } catch (error: any) {
+        logger.error(error);
+        throw new ApiError(500, "Failed to update user role");
+    }
+});
+
+
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar, getAllUsersForAdmin, updateUserRole };
