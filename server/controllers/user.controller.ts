@@ -12,6 +12,7 @@ import { redis } from "../db/redis";
 import { getUserDetailsById } from "../services/user.service";
 import { sanitizeInput } from "../utils/sanitizeAuthInput";
 import { v2 as cloudinary } from "cloudinary";
+import logger from "../utils/logging/logger";
 
 interface IRegistrationUser {
     name: string;
@@ -532,7 +533,7 @@ const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) =
         if (userLoggedIn?.password == undefined) {
             throw new ApiError(400, "Invalid User");
         }
-        
+
         // console.log(typeof userLoggedIn.comparePassword === 'function'); // Should print true if comparePassword is a function
         // console.log(User.schema.methods);
         // console.log(userLoggedIn.constructor.name);
@@ -569,7 +570,7 @@ const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) =
         return res.status(200).json(new ApiResponse(200, {}, "Passowrd has been updated successfully."));
 
     } catch (error: any) {
-        console.error(error);
+        logger.error(error);
     }
 });
 
@@ -640,12 +641,29 @@ const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
         return res.status(200).json(new ApiResponse(200, user, "User avatar updated successfully"));
 
     } catch (error: any) {
-        console.error(error);
+        logger.error(error);
         throw new ApiError(500, "Failed to update user avatar");
     }
 });
 
+/**
+ * Controller function to fetch all users for admin dashboard.
+ * @access Protected (requires authentication) and admin only 
+ * 
+ * Algorithm:
+ * 1. Retrieve all users from the database.
+ * 2. Sort the users by createdAt in descending order.
+ * 3. Send a success response with the list of users.
+ */
+const getAllUsersForAdmin = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const users = await User.find().sort({ createdAt: -1 });
+        return res.status(200).json(new ApiResponse(200, users, "All users fetched successfully"));
+    } catch (error: any) {
+        logger.error(error);
+        throw new ApiError(500, "Failed to get all users");
+    }
+});
 
 
-
-export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar };
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar, getAllUsersForAdmin };

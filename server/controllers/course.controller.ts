@@ -8,6 +8,7 @@ import { redis } from "../db/redis";
 import mongoose from "mongoose";
 import sendMail from "../utils/sendMail";
 import { Notification } from "../models/notification.model";
+import logger from "../utils/logging/logger";
 
 /**
  * Function to handle the upload of a course.
@@ -48,7 +49,7 @@ const uploadCourse = asyncHandler(async (req: Request, res: Response) => {
         res.status(201).json(new ApiResponse(201, course, "Course created successfully."));
 
     } catch (error: any) {
-        console.error("Error uploading course:", error.message);
+        logger.error("Error uploading course:", error.message);
         res.status(500).json(new ApiResponse(500, "Failed to upload course. Please try again later."));
     }
 
@@ -119,7 +120,7 @@ const editCourse = asyncHandler(async (req: Request, res: Response) => {
         res.status(200).json(new ApiResponse(200, updatedCourse, "Course updated successfully."));
     } catch (error: any) {
         // Handle errors
-        console.error("Error editing course:", error.message);
+        logger.error("Error editing course:", error.message);
         res.status(500).json(new ApiResponse(500, null, "Failed to edit course. Please try again later."));
     }
 });
@@ -154,7 +155,7 @@ const getSingleCourse = asyncHandler(async (req: Request, res: Response) => {
 
     } catch (error: any) {
         // Handle errors
-        console.error("Error fetching course:", error.message);
+        logger.error("Error fetching course:", error.message);
         return res.status(500).json(new ApiError(500, "Failed to fetch course. Please try again later."));
     }
 });
@@ -189,7 +190,7 @@ const getAllCourses = asyncHandler(async (req: Request, res: Response) => {
 
     } catch (error: any) {
         // Handle errors
-        console.error("Error fetching courses:", error.message);
+        logger.error("Error fetching courses:", error.message);
         return res.status(500).json(new ApiError(500, "Failed to fetch courses. Please try again later."));
     }
 });
@@ -228,7 +229,7 @@ const getCourseAccessibleByUser = asyncHandler(async (req: Request, res: Respons
             .json(new ApiResponse(200, courseContent, "Course content fetched successfully"));
 
     } catch (error: any) {
-        console.error("Error checking course accessibility:", error.message);
+        logger.error("Error checking course accessibility:", error.message);
         return res.status(500).json(new ApiError(500, "Failed to check course accessibility. Please try again later."));
     }
 });
@@ -405,7 +406,7 @@ const replyToQuestion = asyncHandler(async (req: Request, res: Response) => {
                     .catch(() => console.log("mail not sennt"))
 
             } catch (error: any) {
-                console.error('Failed to send email because:', error);
+                logger.error('Failed to send email because:', error);
             }
         }
 
@@ -575,4 +576,18 @@ const addReplyToReviews = asyncHandler(async (req: Request, res: Response) => {
 
 });
 
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse, addReplyToReviews };
+/**
+ * Controller function to fetch all courses for admin dashboard.
+ * @access Protected (requires authentication) and admin only
+ */
+const getAllCoursesForAdmin = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const courses = await Course.find().sort({ createdAt: -1 });
+        return res.status(200).json(new ApiResponse(200, courses));
+    } catch (error: any) {
+        logger.error(error);
+        throw new ApiError(500, error?.message);
+    }
+});
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse, addReplyToReviews, getAllCoursesForAdmin };

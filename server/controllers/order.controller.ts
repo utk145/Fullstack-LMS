@@ -7,6 +7,7 @@ import { User } from "../models/user.models";
 import { Course } from "../models/course.models";
 import sendMail from "../utils/sendMail";
 import { Notification } from "../models/notification.model";
+import logger from "../utils/logging/logger";
 
 
 /**
@@ -98,5 +99,18 @@ const createOrder = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * Controller function to fetch all orders for admin dashboard.
+ * @access Protected (requires authentication) and admin only
+ */
+const getAllOrdersForAdmin = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const orders = await Order.find().sort({ createdAt: -1 });
+        return res.status(200).json(new ApiResponse(200, orders));
+    } catch (error: any) {
+        logger.error(error);
+        throw new ApiError(500, error?.message);
+    }
+});
 
-export { createOrder };
+export { createOrder, getAllOrdersForAdmin };
