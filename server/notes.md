@@ -48,3 +48,11 @@ BASIC SETUP:
 1. Order and notification model ✅
 2. Create order ✅
 3. Get all notifications ✅, update notification status ✅
+4. Delete read notifications -- with cron job after a certain time ✅
+
+### Admin Dashboard
+1. Get all users ✅, courses ✅, orders ✅
+2. Update user role ✅
+3. Delete user ✅
+4. Delete course ✅
+5. Analytics
