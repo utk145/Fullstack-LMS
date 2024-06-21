@@ -590,4 +590,32 @@ const getAllCoursesForAdmin = asyncHandler(async (req: Request, res: Response) =
     }
 });
 
-export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse, addReplyToReviews, getAllCoursesForAdmin };
+
+/**
+ * Controller function to delete a course.
+ * @access Protected (requires authentication) and admin only
+ */
+const deleteCourse = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const course = await Course.findById(id);
+
+        if (!course) {
+            throw new ApiError(404, "Course not found");
+        }
+
+        await Course.deleteOne({ _id: id });
+
+        // delete the course from the allCourses in redis
+        await redis.del(id);
+
+        return res.status(200).json(new ApiResponse(200, "Course deleted successfully"));
+
+    } catch (error: any) {
+        logger.error(error);
+        throw new ApiError(500, error?.message);
+    }
+});
+
+
+export { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseAccessibleByUser, addQuestion, replyToQuestion, addReviewInCourse, addReplyToReviews, getAllCoursesForAdmin, deleteCourse };

@@ -691,4 +691,33 @@ const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar, getAllUsersForAdmin, updateUserRole };
+/**
+ * Controller function to delete a user.
+ * @access Only admin can delete a user.
+ * 
+ */
+const deleteUser = asyncHandler(async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // Check if the user exists in the database
+        const user = await User.findById(id);
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        await User.deleteOne({ _id: id });
+
+        await redis.del(id);
+
+        return res.status(200).json(new ApiResponse(200, "User deleted successfully"));
+
+    } catch (error: any) {
+        logger.error(error);
+        throw new ApiError(500, "Failed to delete user");
+    }
+});
+
+
+export { registerUser, activateUser, loginUser, logoutUser, updateAccessToken, getUserInfo, socialAuth, updateUserNameEmailInfo, changeCurrentPassword, updateUserAvatar, getAllUsersForAdmin, updateUserRole, deleteUser };
