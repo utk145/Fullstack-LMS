@@ -55,4 +55,9 @@ BASIC SETUP:
 2. Update user role ✅
 3. Delete user ✅
 4. Delete course ✅
-5. Analytics
+5. **Analytics** 
+    - Get the last 28 days' (and for for last year)
+        -  users
+            - user data analytics for how many users are created in the last 28 days and how many users are created in the whole last one year
+        -  orders
+        -  notifications 

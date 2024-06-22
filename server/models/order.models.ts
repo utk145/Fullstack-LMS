@@ -1,4 +1,4 @@
-import mongoose, { Model } from "mongoose";
+import mongoose, { Model, Document } from "mongoose";
 
 /**
  * Interface for Order document.

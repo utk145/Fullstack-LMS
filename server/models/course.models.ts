@@ -151,7 +151,7 @@ const courseSchema = new mongoose.Schema<ICourse>({
         type: Number,
         default: 0,
     },
-});
+}, { timestamps: true });
 
 // Export the Course model
 export const Course = mongoose.model<ICourse>("Course", courseSchema);
